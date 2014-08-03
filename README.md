@@ -12,11 +12,11 @@ How to use it
 ----
 0) I've never tested this in Windows, but I don't see why it shouldn't work there.
 
-1) You need a server that's not blocked by your goverment/insitutition etc. ( but you can test it without a server,using your own computer)
+1) You need a server that's not blocked by your government/institution etc. ( But you can test it without a server,using your own computer)
 
-2) Install nodejs from here http://nodejs.org
+2) Install nodejs in server/client from here http://nodejs.org
 
-3) Put IP/DNS address of the server in config file( You can set them to 127.0.0.1 just for testing)
+3) Put IP/DNS address of the server in config file( You can set it to 127.0.0.1 just for testing)
 Note: Port 8001 of server should be open.
 
 4) In client run <code>node client.js</code> . In server run <code>node server.js</code>
