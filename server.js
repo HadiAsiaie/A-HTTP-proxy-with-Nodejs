@@ -1,121 +1,70 @@
 //server
 
-function encrypt(s)
-{    
-    var res='';
-    for(var i=0;i<s.length;i++)
-    {
-	if(s[i]>='a' && s[i]<='z')
-	{
-	    var d=s.charCodeAt(i)-97;
-	    d=(d+13);
-	    if(d>=26)
-		d-=26;
-	    var convert=String.fromCharCode(d+97);
-	    res+=convert;
-	}
-	else if(s[i]>='A' && s[i]<='Z')
-	{
-	    var d=s.charCodeAt(i)-65;
-	    d=(d+13);
-	    if(d>=26)
-		d-=26;
-	    var convert=String.fromCharCode(d+65);
-	    res+=convert;
-	}
-	else
-	{
-	    res+=s[i];
-	}
-
-    }
-    return res;
-}
-function decrypt(s)
-{
-    return encrypt(s);
-}
-
-
-var http=require('http');
-var url=require('url');
-var currentReq=0;
-
-var s=http.createServer(function(req,res){
-    //res.writeHead(200);
-
-    myUrl=req.url;
-    //decrypt
-    myUrl=decrypt(myUrl);
+my_utils = require('./utils');
+var http = require('http');
+var url = require('url');
+var currentReq = 0;
+var number_of_open_connections = 0;
+var s = http.createServer(function (req, res) {
     currentReq++;
-    console.log('current number of requests( In server): '+currentReq.toString());
-    params=url.parse(myUrl);          
+    number_of_open_connections++;
+    console.log("Number of open connection is " + number_of_open_connections);
+    console.log('current number of requests( In server): ' + currentReq.toString());
 
-    console.log('current Request:\n');
-    serverOptions={};console.log(params);
+    var myUrl = url.parse(req.url, true).query.url;
 
-    options={
-        host:params['host'],
-        hostname:params['hostname'],
-        port:params['port'],
-        path:params['path'],
-        method:req.headers['method'],
-        headers:req.headers
+    //decrypt
+    myUrl = my_utils.decrypt(myUrl);
+
+    var values = JSON.parse(myUrl);
+    var needed_url = values.url;
+    var needed_method = values.method;
+    var needed_headers = values.headers;
+    var params = url.parse(needed_url);
+
+    var options = {
+        host: params.host,
+        hostname: params.hostname,
+        port: params.port,
+        path: params.path,
+        method: needed_method,
+        headers: needed_headers
     };
-    options.headers['host']=params['host'];
-    console.log(options);
+    console.log('current Request:');
+    console.log(needed_url);
+    console.log("Request type: "+needed_method);
 
-    isResClosed=false;
-    res.on('close',function()
-        {
-            console.log("I was closed");
-            isResClosed=true;
-            console.log("So I end myself");
-            res.end();
-        }
-    );
-    res.on('end',function()
-        {
-            console.log("I was ended");
-            isResClosed=true;
-        }
-    );
-    
-    var getter = http.request(options, function(res2) {
-	console.log('STATUS: ' + res2.statusCode);
-	//console.log('HEADERS: ' + JSON.stringify(res2.headers));
-	res.writeHead(res2.statusCode,res2.headers);
-    res2.on('data', function (chunk) {
-        if(!isResClosed)
-            res.write(chunk);
-    });
-    res2.on('end',function()
-            {
-                if(!isResClosed)
-                    res.end();
+    var getter = http.request(options, function (res2) {
+        console.log('STATUS: ' + res2.statusCode + " For this url :" + needed_url);
+
+        res.writeHead(res2.statusCode, res2.headers);
+        res2.pipe(res);
+
+        res2.on('data', function (chunk) {
+                console.log("Still getting data for " + needed_url);
             }
         );
     });
-    req.on('data',function(chunk)
-        {
-            console.log("I recieved data");
-            getter.write(chunk);
-        }
-    );
-    getter.on('error',function()
-        {
+
+    req.pipe(getter);
+    getter.on('error', function () {
             console.log("I got an error in server( in amazon, this shouldn't happen a lot");
+            //console.log("I guess I need to end the response!");
+            //res.end();
         }
     );
-    req.on('error',function()
-        {
+    req.on('error', function () {
             console.log("error accessing server,( this SHOULD HAPPEN A LOT");
         }
     );
-    getter.end();
-        
-           
+    res.on('close',function(){
+        console.log("Connection closed");
+        getter.abort();
+    });
+
+
+
 });
-port=8001;
-console.log('Server listening on port '+port.toString());
+port = 8001;
+console.log('Server listening on port ' + port.toString());
 s.listen(port);

@@ -1,5 +1,7 @@
 exports.encrypt=function(s)
 {
+    if(!s)
+        return "";
     var res='';
     for(var i=0;i<s.length;i++)
     {
@@ -31,5 +33,5 @@ exports.encrypt=function(s)
 };
 exports.decrypt=function(s)
 {
-    return encrypt(s);
+    return exports.encrypt(s);
 };
