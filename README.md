@@ -30,3 +30,19 @@ In Version 30 of firefox, you can access http configuration like this:
 Firefox->Preferences->Network->Setting->Manual proxy configuration->HTTP proxy
 
 Now you should be able to access website using proxy! check logs of node programs to make sure.
+
+How it works
+----
+
+For every http request( They comes from browser, mostly):
+
+1) Client parses headers(including url), encrypts it using a simple encryption( checkout encrypt function in utils.js file)
+
+2) Client Sends the request to server
+
+3) Server decrypt headers and make the request to the website
+
+4) Server passes the response to client.
+
+5) Client writes the response
+
